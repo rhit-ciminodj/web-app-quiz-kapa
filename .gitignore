@@ -1,23 +1,116 @@
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+#################################
+# Node / JavaScript
+#################################
+
 # dependencies
-/node_modules
-/.pnp
+/node_modules/
+/.pnp/
 .pnp.js
 
-# testing
-/coverage
+# package manager caches
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports
+report.*
+
+#################################
+# Build / Output
+#################################
 
 # production
-/build
+/build/
+/dist/
+/out/
+/.next/
+/.nuxt/
+/.vercel/
+/.vercel_build_output/
 
-# misc
-.DS_Store
+# coverage
+/coverage/
+/.nyc_output/
+
+#################################
+# Environment
+#################################
+
+# local env files
+.env
+.env.*.local
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+!.env.example
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+#################################
+# Caches
+#################################
+
+.cache/
+.parcel-cache/
+.next/cache/
+.vite/
+dist/
+
+#################################
+# IDEs / Editors
+#################################
+
+# VSCode
+.vscode/
+
+# JetBrains
+.idea/
+
+# Visual Studio
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+#################################
+# OS files
+#################################
+
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+#################################
+# Misc / Secrets
+#################################
+
+# SSL / certs
+*.pem
+*.p12
+*.key
+*.csr
+*.crt
+
+# macOS Finder
+.Spotlight-V100
+.Trashes
+
+# npm pack
+*.tgz
