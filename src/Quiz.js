@@ -348,7 +348,7 @@ export default function Quiz() {
         <p>Loading questions…</p>
       ) : rateLimit.retrying ? (
         <div>
-          <p>Loading Quiz… (rate limited, retrying in {rateLimit.nextDelay}s)</p>
+          <p>Loading Quiz… </p>
           <div className="mt-4 space-x-2">
             <button onClick={() => { if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; } cancelRetryRef.current = false; /* allow loop to continue and retry immediately by setting attempts low */ fetchQuestions(); setRateLimit({ retrying: false, attempts: 0, nextDelay: 0 }); }} className="bg-blue-500 py-1 px-3 rounded">Retry now</button>
             <button onClick={() => { if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; } cancelRetryRef.current = true; setRateLimit({ retrying: false, attempts: 0, nextDelay: 0 }); }} className="bg-gray-300 py-1 px-3 rounded">Cancel</button>
