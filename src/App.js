@@ -3,6 +3,7 @@ import Home from './Home'
 import Results from './Results'
 import Leaderboard from './Leaderboard'
 import Quiz from './Quiz'
+import ViewQuiz from './ViewQuiz'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/results" element={<Results />} />
             <Route path="/scores" element={<Leaderboard />} />
+            <Route path="/view/:slug" element={<ViewQuiz />} />
           </Routes>
         </main>
       </div>
@@ -24,9 +26,13 @@ export default function App() {
 
 function Navigation() {
   return (
-    <nav className="h-16 flex justify-center items-center bg-black">
-      <Link to="/" className="text-white hover:text-gray-300 px-6">Home</Link>
-      <Link to="/scores" className="text-white hover:text-gray-300 px-6">Your High Scores</Link>
+    <nav className="h-16 flex items-center justify-between bg-black px-6">
+      <div className="flex items-center gap-4">
+        <div className="text-white font-bold text-lg">Quizi</div>
+        <Link to="/" className="text-blue-300 hover:text-blue-400 px-3">Home</Link>
+        <Link to="/scores" className="text-blue-300 hover:text-blue-400 px-3">Your High Scores</Link>
+      </div>
+      <div className="text-sm text-gray-400">Test Your knowledge!</div>
     </nav>
   )
 }

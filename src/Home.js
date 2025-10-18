@@ -47,11 +47,11 @@ const Home = () => {
     };
 
     return (
-        <div className="container mx-auto text-center mt-20 px-4">
-            <h1 className="text-3xl font-bold mb-4">Welcome to Quizi!</h1>
-            <p className="mb-6">Test your knowledge with our a variety of different quizzes.</p>
-            <div className="mb-6 text-left">
-                <h2 className="text-xl font-semibold mb-2">Available Categories</h2>
+        <div className="container mx-auto text-center mt-16 px-4 max-w-3xl">
+            <h1 className="text-4xl font-extrabold mb-2 text-white">QuizTaka</h1>
+            <p className="mb-6 text-blue-700">Take one of our Short Quizzes</p>
+            <div className="mb-6 text-left bg-gray-900 p-4 rounded-lg border border-gray-800">
+                <h2 className="text-lg font-semibold mb-2 text-blue-700">Available Categories</h2>
 
                 <div>
                     <button
@@ -59,7 +59,7 @@ const Home = () => {
                         aria-expanded={display}
                         aria-controls="categories-list"
                         onClick={handleClick}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded"
+                        className="bg-blue-700 hover:bg-blue-600 text-white py-1 px-3 rounded"
                     >
                         {display ? 'Hide Categories' : 'Show Categories'}
                     </button>
@@ -70,8 +70,10 @@ const Home = () => {
                         <ul>
                             {categories.map((category) => (
                                 <li key={category.id} className="mb-1">
-                                    {category.name}
-                                    <button onClick={() => startQuiz(category.id)} className="ml-2 bg-blue-500 hover:bg-blue-600 text-white py-0.5 px-2 rounded text-sm">Start Quiz in this Category</button>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span className="text-blue-700">{category.name}</span>
+                                                                            <button onClick={() => startQuiz(category.id)} className="ml-2 bg-blue-600 hover:bg-blue-500 text-white py-1 px-3 rounded text-sm">Start</button>
+                                                                        </div>
                                 </li>
                             ))}
                         </ul>
@@ -80,6 +82,7 @@ const Home = () => {
                     )}
                 </div>
                 <div className="mt-4">
+                    <div className="text-sm text-gray-400 mb-2">Choose a difficulty and the number of questions for the quiz</div>
                     <label className="block mb-1">Difficulty</label>
                     <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="border rounded py-1 px-2">
                         <option value="any">Any</option>

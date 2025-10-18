@@ -17,6 +17,16 @@ export default function Quiz() {
   const countdownRef = React.useRef(null);
   const [timeLeft, setTimeLeft] = React.useState(null); // seconds
   const preparedRef = React.useRef([]);
+  // helper: compute score with partial credit for hinted questions
+  function computeScoreFromPrepared(arr) {
+    return arr.reduce((acc, q) => {
+      if (typeof q._selectedIndex !== 'number') return acc;
+      const selected = q.choices[q._selectedIndex];
+      const correct = q.correct_answer;
+      if (selected !== correct) return acc;
+      return acc + (q._hintUsed ? 0.5 : 1);
+    }, 0);
+  }
   const [token, setToken] = React.useState(() => {
     try { return localStorage.getItem('opentdb_token') || null; } catch (e) { return null; }
   });
@@ -105,7 +115,7 @@ export default function Quiz() {
                             const j = Math.floor(Math.random() * (i + 1));
                             [choices[i], choices[j]] = [choices[j], choices[i]];
                           }
-                          return { ...q, choices };
+                          return { ...q, choices, _hintUsed: false, _eliminated: [] };
                         });
                         setPrepared(preparedQs2);
                         // ensure preparedRef is current and start the countdown like the main fetch path
@@ -121,7 +131,7 @@ export default function Quiz() {
                               clearInterval(countdownRef.current);
                               countdownRef.current = null;
                               const latest = preparedRef.current || [];
-                              const correctNow = latest.reduce((acc, q) => acc + (typeof q._selectedIndex === 'number' && q.choices[q._selectedIndex] === q.correct_answer ? 1 : 0), 0);
+                              const correctNow = computeScoreFromPrepared(latest);
                               try {
                                 const prev = JSON.parse(localStorage.getItem('quiz_results') || '[]');
                                 const entry = {
@@ -205,7 +215,7 @@ export default function Quiz() {
             const j = Math.floor(Math.random() * (i + 1));
             [choices[i], choices[j]] = [choices[j], choices[i]];
           }
-          return { ...q, choices };
+          return { ...q, choices, _hintUsed: false, _eliminated: [] };
         });
   setPrepared(preparedQs);
   preparedRef.current = preparedQs;
@@ -220,7 +230,7 @@ export default function Quiz() {
               clearInterval(countdownRef.current);
               countdownRef.current = null;
               const latest = preparedRef.current || [];
-              const correctNow = latest.reduce((acc, q) => acc + (typeof q._selectedIndex === 'number' && q.choices[q._selectedIndex] === q.correct_answer ? 1 : 0), 0);
+              const correctNow = computeScoreFromPrepared(latest);
               try {
                 const prev = JSON.parse(localStorage.getItem('quiz_results') || '[]');
                 const entry = {
@@ -251,8 +261,53 @@ export default function Quiz() {
   );
 
   React.useEffect(() => {
+    // If a quizPayload was passed via navigation state, use it instead of fetching from OpenTDB
+    if (location && location.state && location.state.quizPayload) {
+      const payload = location.state.quizPayload;
+      const got = payload.questions || [];
+      setQuestions(got);
+      const preparedQs = got.map((q) => {
+        const choices = [...(q.choices || [])];
+        return { ...q, choices };
+      });
+      setPrepared(preparedQs);
+      preparedRef.current = preparedQs;
+      // start timer
+      setTimeLeft(300);
+      if (countdownRef.current) { clearInterval(countdownRef.current); countdownRef.current = null; }
+      countdownRef.current = setInterval(() => {
+        setTimeLeft((t) => {
+          if (typeof t !== 'number') return t;
+            if (t <= 1) {
+            clearInterval(countdownRef.current);
+            countdownRef.current = null;
+            const latest = preparedRef.current || [];
+            const correctNow = computeScoreFromPrepared(latest);
+            try {
+              const prev = JSON.parse(localStorage.getItem('quiz_results') || '[]');
+              const entry = {
+                id: Date.now(),
+                score: correctNow,
+                total: latest.length,
+                categoryId: null,
+                categoryName: payload.title || 'Custom',
+                difficulty: 'custom',
+                timestamp: Date.now(),
+              };
+              prev.push(entry);
+              localStorage.setItem('quiz_results', JSON.stringify(prev));
+            } catch (e) {}
+            navigate('/results', { state: { score: correctNow, totalQuestions: latest.length } });
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+      setLoading(false);
+      return;
+    }
     fetchQuestions();
-  }, [fetchQuestions]);
+  }, [fetchQuestions, location, navigate]);
 
   // request a token if missing, once per mount
   React.useEffect(() => {
@@ -281,15 +336,13 @@ export default function Quiz() {
   // finish handled by navigating with state to /results
 
   return (
-    <div className="container mx-auto mt-10 px-4">
-      <h2 className="text-2xl font-bold mb-4">Quiz</h2>
-
-      {prepared.length > 0 && timeLeft != null && (
-        <div className="mb-4">
-          <strong>Time left: </strong>
-          <span>{Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}</span>
-        </div>
-      )}
+    <div className="container mx-auto mt-8 px-4 max-w-3xl">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold text-white">Quiz</h2>
+        {prepared.length > 0 && timeLeft != null && (
+          <div className="text-blue-700 font-mono">{Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}</div>
+        )}
+      </div>
 
       {loading ? (
         <p>Loading questions…</p>
@@ -336,22 +389,27 @@ export default function Quiz() {
         </div>
       ) : (
         <div>
-          <p>Loaded {questions.length} question(s).</p>
-          <ol className="mt-4 list-decimal list-inside">
+          {questions.length > 0 && (
+            <p className="text-blue-700 mb-3">Loaded {questions.length} question(s).</p>
+          )}
+          <div className="space-y-4">
             {prepared.map((q, i) => (
-              <li key={i} className="mb-3">
-                <div className="mb-2" dangerouslySetInnerHTML={{ __html: q.question }} />
+              <div key={i} className="bg-gray-900 p-4 rounded border border-gray-800">
+                <div className="mb-2 text-white font-medium" dangerouslySetInnerHTML={{ __html: q.question }} />
                 <div className="grid gap-2">
                   {q.choices.map((choice, ci) => {
                     const selected = q._selectedIndex === ci;
                     const isCorrect = q.correct_answer === choice;
                     const reveal = typeof q._selectedIndex === 'number';
-                    const bg = reveal ? (isCorrect ? 'bg-green-500' : (selected ? 'bg-red-500' : 'bg-white')) : 'bg-white';
+                    const eliminated = Array.isArray(q._eliminated) && q._eliminated.includes(ci);
+                    const disabled = eliminated;
+                    const base = reveal ? (isCorrect ? 'bg-green-600 text-white' : (selected ? 'bg-red-600 text-white' : 'bg-gray-800 text-blue-100')) : (eliminated ? 'bg-gray-700 text-gray-400 line-through' : 'bg-gray-800 text-blue-100');
                     return (
                       <button
                         key={ci}
-                        className={`${bg} border rounded py-1 px-2 text-left`}
+                        className={`${base} w-full text-left border border-gray-700 rounded py-2 px-3`}
                         onClick={() => {
+                          if (disabled) return;
                           // mark selection immutably
                           setPrepared((prev) => {
                             const copy = prev.slice();
@@ -365,33 +423,57 @@ export default function Quiz() {
                     );
                   })}
                 </div>
-              </li>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-sm text-gray-400">{q._hintUsed ? 'Hint used (-50%)' : ''}</div>
+                  <div>
+                    {/* only allow hint if not yet used AND the question hasn't been answered */}
+                    {!q._hintUsed && typeof q._selectedIndex !== 'number' && (
+                      <button className="bg-blue-600 hover:bg-blue-500 text-white py-1 px-3 rounded" onClick={() => {
+                        // eliminate two wrong answers
+                        setPrepared((prev) => {
+                          const copy = prev.slice();
+                          const cur = copy[i];
+                          const incorrectIndexes = cur.choices.map((c, idx) => ({ c, idx })).filter(x => x.c !== cur.correct_answer).map(x => x.idx);
+                          // pick two random incorrect indexes to eliminate
+                          const shuffled = incorrectIndexes.slice().sort(() => 0.5 - Math.random());
+                          const toElim = shuffled.slice(0, Math.min(2, shuffled.length));
+                          copy[i] = { ...cur, _hintUsed: true, _eliminated: toElim };
+                          preparedRef.current = copy;
+                          return copy;
+                        });
+                      }}>Use Hint</button>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))}
-          </ol>
-          <button onClick={() => {
-            // compute score
-            const correct = prepared.reduce((acc, q) => acc + (typeof q._selectedIndex === 'number' && q.choices[q._selectedIndex] === q.correct_answer ? 1 : 0), 0);
-            const total = prepared.length;
-            // persist result to localStorage
-            try {
-              const prev = JSON.parse(localStorage.getItem('quiz_results') || '[]');
-              const entry = {
-                id: Date.now(),
-                score: correct,
-                total,
-                categoryId: category || null,
-                categoryName: prepared[0]?.category || 'Any',
-                difficulty: difficulty || 'any',
-                timestamp: Date.now(),
-              };
-              prev.push(entry);
-              localStorage.setItem('quiz_results', JSON.stringify(prev));
-            } catch (e) {
-              // ignore storage errors
-            }
-            // navigate to results page with state
-            navigate('/results', { state: { score: correct, totalQuestions: total } });
-          }} className="mt-6 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Finish Quiz</button>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <button onClick={() => {
+              // compute score with partial credit for hints
+              const correct = computeScoreFromPrepared(prepared);
+              const total = prepared.length;
+              // persist result to localStorage
+              try {
+                const prev = JSON.parse(localStorage.getItem('quiz_results') || '[]');
+                const entry = {
+                  id: Date.now(),
+                  score: correct,
+                  total,
+                  categoryId: category || null,
+                  categoryName: prepared[0]?.category || 'Any',
+                  difficulty: difficulty || 'any',
+                  timestamp: Date.now(),
+                };
+                prev.push(entry);
+                localStorage.setItem('quiz_results', JSON.stringify(prev));
+              } catch (e) {
+                // ignore storage errors
+              }
+              // navigate to results page with state
+              navigate('/results', { state: { score: correct, totalQuestions: total } });
+            }} className="mt-6 bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded">Finish Quiz</button>
+          </div>
         </div>
       )}
     </div>

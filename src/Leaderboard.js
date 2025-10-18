@@ -51,38 +51,30 @@ export default function Leaderboard() {
 
     const byDifficulty = groupTopScores(results);
 
-        return (
-            <div style={{ textAlign: 'center', marginTop: '50px' }}>
-                <h1>Your High Scores</h1>
+    return (
+        <div className="container mx-auto mt-10 px-4 max-w-3xl">
+            <h1 className="text-2xl font-bold text-white mb-4">Your High Scores</h1>
 
             {['easy', 'medium', 'hard'].map((diff) => {
                 const entries = Object.values(byDifficulty[diff] || {});
                 return (
-                    <div key={diff} style={{ maxWidth: 720, margin: '20px auto', textAlign: 'left' }}>
-                        <button onClick={() => setOpen((s) => ({ ...s, [diff]: !s[diff] }))} className="bg-gray-200 py-1 px-3 rounded">
+                    <div key={diff} className="mb-4 bg-gray-900 p-3 rounded border border-gray-800">
+                        <button onClick={() => setOpen((s) => ({ ...s, [diff]: !s[diff] }))} className="w-full text-left text-blue-700 font-semibold">
                             {diff.charAt(0).toUpperCase() + diff.slice(1)} ({entries.length}) {open[diff] ? '▲' : '▼'}
                         </button>
                         {open[diff] && (
-                            <div style={{ marginTop: 10 }}>
+                            <div className="mt-3">
                                 {entries.length === 0 ? (
-                                    <p>No scores for {diff} yet.</p>
+                                    <p className="text-gray-400">No scores for {diff} yet.</p>
                                 ) : (
-                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                        <thead>
-                                            <tr>
-                                                <th style={{ textAlign: 'left', borderBottom: '1px solid #ddd', padding: 8 }}>Category</th>
-                                                <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd', padding: 8 }}>Top Score</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                                                    {entries.map((e) => (
-                                                                        <tr key={e.categoryId}>
-                                                                            <td style={{ padding: 8 }}>{decodeHtmlEntities(e.categoryName)}</td>
-                                                                            <td style={{ padding: 8, textAlign: 'right' }}>{e.score} / {e.total}</td>
-                                                                        </tr>
-                                                                    ))}
-                                        </tbody>
-                                    </table>
+                                    <div className="space-y-2">
+                                        {entries.map((e) => (
+                                            <div key={e.categoryId} className="flex justify-between text-blue-700">
+                                                <div>{decodeHtmlEntities(e.categoryName)}</div>
+                                                <div className="text-gray-300">{e.score} / {e.total}</div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         )}
