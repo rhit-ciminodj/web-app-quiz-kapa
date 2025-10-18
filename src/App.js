@@ -26,8 +26,7 @@ function Navigation() {
   return (
     <nav className="h-16 flex justify-center items-center bg-black">
       <Link to="/" className="text-white hover:text-gray-300 px-6">Home</Link>
-      <Link to="/results" className="text-white hover:text-gray-300 px-6">Your Results</Link>
-      <Link to="/scores" className="text-white hover:text-gray-300 px-6">Leaderboard</Link>
+      <Link to="/scores" className="text-white hover:text-gray-300 px-6">Your High Scores</Link>
     </nav>
   )
 }
